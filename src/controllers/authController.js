@@ -98,11 +98,18 @@ async function loginUser(req, res) {
 // =====================register foodpartner ====================
 async function registerFoodPartner(req, res) {
     try {
-        const { name, email, password, contactName, phone, address } = req.body;
+        const { name, email, password, contactName, phone, address, adminCode } = req.body;
+
+        // Validate admin code
+        const validAdminCode = process.env.ADMIN_CODE;
+        if (!adminCode || adminCode !== validAdminCode) {
+            return res.status(403).json({ message: "Invalid admin code. Registration denied." });
+        }
+
         const isAlreadyExistsFoodPartner = await FoodPartner.findOne({ email });
 
         if (isAlreadyExistsFoodPartner) {
-            return res.status(400).json({ message: "FoodPartner already exists. Please login instead." });
+            return res.status(400).json({ message: "Account already exists. Please login instead." });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -122,7 +129,7 @@ async function registerFoodPartner(req, res) {
 
         await foodPartner.save();
         res.status(201).json({
-            message: "Food partner registered successfully",
+            message: "Admin account created successfully",
             foodPartner: {
                 id: foodPartner._id,
                 name: foodPartner.name,
@@ -132,7 +139,8 @@ async function registerFoodPartner(req, res) {
         });
     }
     catch (err) {
-        res.status(500).json({ message: "Registration failed. Please try again." });
+        const isProduction = process.env.NODE_ENV === 'production';
+        res.status(500).json({ message: isProduction ? "Registration failed. Please try again." : err.message });
     }
 }
 
@@ -249,7 +257,8 @@ async function registerRestaurant(req, res) {
             restaurant: foodPartner.restaurant
         });
     } catch (err) {
-        res.status(500).json({ message: "Restaurant registration failed. Please try again." });
+        const isProduction = process.env.NODE_ENV === 'production';
+        res.status(500).json({ message: isProduction ? "Restaurant registration failed. Please try again." : err.message });
     }
 }
 
@@ -276,7 +285,8 @@ async function listRestaurants(req, res) {
             restaurants
         });
     } catch (err) {
-        res.status(500).json({ message: 'Failed to fetch restaurants' });
+        const isProduction = process.env.NODE_ENV === 'production';
+        res.status(500).json({ message: isProduction ? 'Failed to fetch restaurants' : err.message });
     }
 }
 
@@ -299,7 +309,8 @@ async function getPartnerProfile(req, res) {
             foodPartner
         });
     } catch (err) {
-        res.status(500).json({ message: "Failed to fetch partner profile" });
+        const isProduction = process.env.NODE_ENV === 'production';
+        res.status(500).json({ message: isProduction ? "Failed to fetch partner profile" : err.message });
     }
 }
 
@@ -345,7 +356,8 @@ async function updateProfilePicture(req, res) {
             }
         });
     } catch (err) {
-        res.status(500).json({ message: "Failed to update profile picture" });
+        const isProduction = process.env.NODE_ENV === 'production';
+        res.status(500).json({ message: isProduction ? "Failed to update profile picture" : err.message });
     }
 }
 

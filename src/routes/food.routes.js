@@ -9,7 +9,9 @@ const {
     addFoodReel,
     searchFood,
     getExploreFood,
-    getReels
+    getReels,
+    updateFood,
+    toggleVisibility
 } = require('../controllers/food.controller');
 const { authFoodPartnerMiddleware } = require('../middleware/authMiddleware');
 const multer = require('multer');
@@ -38,6 +40,8 @@ router.post('/videos/:videoId/comments', addComment);
 router.get('/search', searchFood);
 
 // Food management endpoints
+router.patch('/:foodId', upload.single("thumbnail"), authFoodPartnerMiddleware, updateFood);
+router.patch('/:foodId/visibility', authFoodPartnerMiddleware, toggleVisibility);
 router.delete('/:foodId', authFoodPartnerMiddleware, deleteFood);
 
 module.exports = router;

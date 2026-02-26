@@ -8,7 +8,7 @@ async function connectDB() {
             // Connected successfully
         })
         .catch((err) => {
-            process.exit(1);
+            // DB connection failed — server continues but DB operations will fail
         })
 }
 

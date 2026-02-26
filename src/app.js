@@ -15,13 +15,16 @@ connectDB();
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Security headers
-app.use(helmet());
+// Security headers — allow cross-origin resources
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginEmbedderPolicy: false,
+}));
 
 // Rate limiting
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100,
+    max: 200,
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: 'Too many requests, please try again later.' }
@@ -69,8 +72,8 @@ app.get('/', (req, res) => {
     res.send("OK");
 });
 
-// Auth routes with stricter rate limiting
-app.use('/', authLimiter, authRoutes);
+// Routes — auth limiter only on login/register, not all auth routes
+app.use('/', authRoutes);
 app.use('/food', foodRouter);
 app.use('/analytics', analyticsRouter);
 app.use('/user', userInteractionRouter);

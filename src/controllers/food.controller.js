@@ -48,7 +48,6 @@ async function createFood(req, res) {
             price: validPrice,
             category,
             ingredients,
-            image: undefined,
             thumbnail: thumbnailUrl,
             isAvailable: isAvailable === 'true' || isAvailable === true,
             isReel: isReel === 'true' || isReel === true,
@@ -76,7 +75,8 @@ async function createFood(req, res) {
         });
     }
     catch (err) {
-        res.status(500).json({ message: "Something went wrong" });
+        const isProduction = process.env.NODE_ENV === 'production';
+        res.status(500).json({ message: isProduction ? "Something went wrong" : err.message });
     }
 }
 
@@ -98,7 +98,7 @@ async function getFoodItems(req, res) {
 // Get all videos for the video feed
 async function getVideos(req, res) {
     try {
-        const videos = await FoodModel.find({})
+        const videos = await FoodModel.find({ isAvailable: true })
             .populate('foodPartner', 'name contactName')
             .sort({ createdAt: -1 });
 
@@ -173,10 +173,6 @@ async function deleteFood(req, res) {
             return res.status(404).json({ message: 'Food item not found' });
         }
 
-        // Check if the food item belongs to the authenticated food partner
-        if (foodItem.foodPartner.toString() !== req.foodPartner.id) {
-            return res.status(403).json({ message: 'Not authorized to delete this food item' });
-        }
 
         await FoodModel.findByIdAndDelete(foodId);
 
@@ -248,7 +244,8 @@ async function addFoodReel(req, res) {
             foodReel
         });
     } catch (err) {
-        res.status(500).json({ message: "Something went wrong" });
+        const isProduction = process.env.NODE_ENV === 'production';
+        res.status(500).json({ message: isProduction ? "Something went wrong" : err.message });
     }
 }
 
@@ -280,7 +277,7 @@ async function searchFood(req, res) {
             searchCriteria.isReel = false;
         }
 
-        const results = await FoodModel.find(searchCriteria)
+        const results = await FoodModel.find({ ...searchCriteria, isAvailable: true })
             .populate('foodPartner', 'name contactName restaurant')
             .sort({ createdAt: -1 });
 
@@ -307,7 +304,7 @@ async function getExploreFood(req, res) {
 
         const skip = (page - 1) * limit;
 
-        const foodItems = await FoodModel.find(searchCriteria)
+        const foodItems = await FoodModel.find({ ...searchCriteria, isAvailable: true })
             .populate('foodPartner', 'name contactName restaurant')
             .sort({ createdAt: -1 })
             .skip(skip)
@@ -337,13 +334,13 @@ async function getReels(req, res) {
 
         const skip = (page - 1) * limit;
 
-        const reels = await FoodModel.find({ isReel: true })
+        const reels = await FoodModel.find({ isReel: true, isAvailable: true })
             .populate('foodPartner', 'name contactName restaurant')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(parseInt(limit));
 
-        const total = await FoodModel.countDocuments({ isReel: true });
+        const total = await FoodModel.countDocuments({ isReel: true, isAvailable: true });
 
         // Transform the data to match frontend expectations
         const transformedReels = reels.map(reel => ({
@@ -380,6 +377,65 @@ async function getReels(req, res) {
     }
 }
 
+// Update food item details
+async function updateFood(req, res) {
+    try {
+        const { foodId } = req.params;
+        const { foodname, description, category, ingredients } = req.body;
+
+        const foodItem = await FoodModel.findById(foodId);
+        if (!foodItem) {
+            return res.status(404).json({ message: 'Food item not found' });
+        }
+
+
+        if (foodname) foodItem.foodname = foodname;
+        if (description !== undefined) foodItem.description = description;
+        if (category) foodItem.category = category;
+        if (ingredients !== undefined) foodItem.ingredients = ingredients;
+
+        // Handle new thumbnail upload
+        if (req.file) {
+            const uploadResult = await storageService.uploadFile(req.file.buffer, uuid());
+            foodItem.thumbnail = uploadResult.url;
+        }
+
+        await foodItem.save();
+
+        res.status(200).json({
+            message: 'Food item updated successfully',
+            food: foodItem
+        });
+    } catch (error) {
+        const isProduction = process.env.NODE_ENV === 'production';
+        res.status(500).json({ message: isProduction ? 'Error updating food item' : error.message });
+    }
+}
+
+// Toggle visibility (isAvailable)
+async function toggleVisibility(req, res) {
+    try {
+        const { foodId } = req.params;
+
+        const foodItem = await FoodModel.findById(foodId);
+        if (!foodItem) {
+            return res.status(404).json({ message: 'Food item not found' });
+        }
+
+
+        foodItem.isAvailable = !foodItem.isAvailable;
+        await foodItem.save();
+
+        res.status(200).json({
+            message: foodItem.isAvailable ? 'Item is now visible' : 'Item is now hidden',
+            isAvailable: foodItem.isAvailable
+        });
+    } catch (error) {
+        const isProduction = process.env.NODE_ENV === 'production';
+        res.status(500).json({ message: isProduction ? 'Error toggling visibility' : error.message });
+    }
+}
+
 module.exports = {
     createFood,
     getFoodItems,
@@ -390,4 +446,6 @@ module.exports = {
     searchFood,
     getExploreFood,
     getReels,
+    updateFood,
+    toggleVisibility,
 }

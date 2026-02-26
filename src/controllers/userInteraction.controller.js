@@ -49,7 +49,6 @@ async function toggleLike(req, res) {
             totalLikes: foodItem.likes
         });
     } catch (error) {
-        console.error('Error toggling like:', error);
         res.status(500).json({ message: "Error updating like status" });
     }
 }
@@ -100,7 +99,6 @@ async function addComment(req, res) {
             totalComments: foodItem.comments.length
         });
     } catch (error) {
-        console.error('Error adding comment:', error);
         res.status(500).json({ message: "Error adding comment" });
     }
 }
@@ -132,7 +130,6 @@ async function getComments(req, res) {
             }
         });
     } catch (error) {
-        console.error('Error fetching comments:', error);
         res.status(500).json({ message: "Error fetching comments" });
     }
 }
@@ -179,7 +176,6 @@ async function toggleSave(req, res) {
             isSaved: !isSaved
         });
     } catch (error) {
-        console.error('Error toggling save:', error);
         res.status(500).json({ message: "Error updating save status" });
     }
 }
@@ -218,7 +214,6 @@ async function getUserInteractions(req, res) {
             }
         });
     } catch (error) {
-        console.error('Error fetching user interactions:', error);
         res.status(500).json({ message: "Error fetching user interactions" });
     }
 }
@@ -248,7 +243,6 @@ async function shareItem(req, res) {
             totalShares: foodItem.isReel ? foodItem.reelData.shares : foodItem.shares
         });
     } catch (error) {
-        console.error('Error sharing item:', error);
         res.status(500).json({ message: "Error sharing item" });
     }
 }
@@ -261,15 +255,3 @@ module.exports = {
     getUserInteractions,
     shareItem
 };
-
-
-
-
-
-
-
-
-
-
-
-

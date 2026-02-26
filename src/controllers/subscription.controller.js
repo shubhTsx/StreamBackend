@@ -37,7 +37,6 @@ async function submitSubscription(req, res) {
             const uploadResult = await storageService.uploadFile(req.file.buffer, `payment_${uuid()}`);
             screenshotUrl = uploadResult.url;
         } catch (uploadErr) {
-            console.error('Screenshot upload error:', uploadErr);
             return res.status(500).json({ message: 'Failed to upload payment screenshot. Please try again.' });
         }
 
@@ -65,7 +64,6 @@ async function submitSubscription(req, res) {
             }
         });
     } catch (err) {
-        console.error('Submit subscription error:', err);
         res.status(500).json({ message: 'Failed to submit subscription. Please try again.' });
     }
 }
@@ -86,7 +84,6 @@ async function getSubscriptionStatus(req, res) {
             subscription: subscription || null
         });
     } catch (err) {
-        console.error('Get subscription status error:', err);
         res.status(500).json({ message: 'Failed to fetch subscription status' });
     }
 }
@@ -103,7 +100,6 @@ async function getPendingSubscriptions(req, res) {
             subscriptions
         });
     } catch (err) {
-        console.error('Get pending subscriptions error:', err);
         res.status(500).json({ message: 'Failed to fetch pending subscriptions' });
     }
 }
@@ -121,7 +117,6 @@ async function getAllSubscriptions(req, res) {
             subscriptions
         });
     } catch (err) {
-        console.error('Get all subscriptions error:', err);
         res.status(500).json({ message: 'Failed to fetch subscriptions' });
     }
 }
@@ -154,7 +149,6 @@ async function approveSubscription(req, res) {
             subscription
         });
     } catch (err) {
-        console.error('Approve subscription error:', err);
         res.status(500).json({ message: 'Failed to approve subscription' });
     }
 }
@@ -187,7 +181,6 @@ async function rejectSubscription(req, res) {
             subscription
         });
     } catch (err) {
-        console.error('Reject subscription error:', err);
         res.status(500).json({ message: 'Failed to reject subscription' });
     }
 }

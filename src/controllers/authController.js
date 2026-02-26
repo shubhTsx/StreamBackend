@@ -6,7 +6,21 @@ const { v4: uuid } = require('uuid');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 require("dotenv").config();
-const JWT_KEY = process.env.JWT_KEY || 'fallback_jwt_secret_key_for_development';
+
+const JWT_KEY = process.env.JWT_KEY;
+if (!JWT_KEY) {
+    throw new Error('JWT_KEY environment variable is required');
+}
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+function getCookieOptions() {
+    return {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'strict',
+    };
+}
 
 // ====== user register ===========
 async function registerUser(req, res) {
@@ -36,7 +50,6 @@ async function registerUser(req, res) {
         });
     }
     catch (err) {
-        console.error('Registration error:', err);
         res.status(500).json({ message: "Registration failed. Please try again." });
     }
 }
@@ -62,11 +75,7 @@ async function loginUser(req, res) {
 
         const token = jwt.sign({ id: user._id }, JWT_KEY);
 
-        res.cookie("token", token, {
-            httpOnly: true, // prevents access from JS (protects from XSS)
-            secure: false,  // set true if using HTTPS
-            sameSite: "strict",
-        });
+        res.cookie("token", token, getCookieOptions());
 
         res.status(200).json({
             message: `Welcome back, ${user.name}!`,
@@ -81,7 +90,6 @@ async function loginUser(req, res) {
         });
     }
     catch (err) {
-        console.error('Login error:', err);
         res.status(500).json({ message: "Login failed. Please try again." });
     }
 }
@@ -124,7 +132,6 @@ async function registerFoodPartner(req, res) {
         });
     }
     catch (err) {
-        console.error('Partner registration error:', err);
         res.status(500).json({ message: "Registration failed. Please try again." });
     }
 }
@@ -157,11 +164,7 @@ async function loginFoodPartner(req, res) {
 
         const token = jwt.sign({ id: foodPartner._id }, JWT_KEY);
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: false,
-            sameSite: "strict",
-        });
+        res.cookie("token", token, getCookieOptions());
 
         res.status(200).json({
             message: `Welcome back, ${foodPartner.name}!`,
@@ -174,7 +177,6 @@ async function loginFoodPartner(req, res) {
         });
     }
     catch (err) {
-        console.error('Partner login error:', err);
         res.status(500).json({ message: "Login failed. Please try again." });
     }
 }
@@ -202,10 +204,6 @@ async function logoutfoodPartner(req, res) {
 // =====================register restaurant ====================
 async function registerRestaurant(req, res) {
     try {
-        console.log('registerRestaurant called with body:', req.body);
-        console.log('registerRestaurant foodPartner:', req.foodPartner);
-        console.log('registerRestaurant file:', req.file ? { fieldname: req.file.fieldname, size: req.file.size } : 'no file');
-
         const { name, description, cuisine, location } = req.body;
         const foodPartnerId = req.foodPartner?.id;
 
@@ -224,13 +222,12 @@ async function registerRestaurant(req, res) {
 
         let imageUrl = '';
 
-        // Handle image upload if provided (mirror video storage logic)
+        // Handle image upload if provided
         if (req.file && req.file.buffer) {
             try {
                 const uploadResult = await storageService.uploadFile(req.file.buffer, uuid());
                 imageUrl = uploadResult.url;
             } catch (uploadErr) {
-                console.error('Restaurant image upload error:', uploadErr);
                 // Not a hard failure for registration; continue without image
             }
         }
@@ -252,7 +249,6 @@ async function registerRestaurant(req, res) {
             restaurant: foodPartner.restaurant
         });
     } catch (err) {
-        console.error('Restaurant registration error:', err);
         res.status(500).json({ message: "Restaurant registration failed. Please try again." });
     }
 }
@@ -280,7 +276,6 @@ async function listRestaurants(req, res) {
             restaurants
         });
     } catch (err) {
-        console.error('List restaurants error:', err);
         res.status(500).json({ message: 'Failed to fetch restaurants' });
     }
 }
@@ -304,7 +299,6 @@ async function getPartnerProfile(req, res) {
             foodPartner
         });
     } catch (err) {
-        console.error('Get partner profile error:', err);
         res.status(500).json({ message: "Failed to fetch partner profile" });
     }
 }
@@ -326,7 +320,6 @@ async function updateProfilePicture(req, res) {
             const uploadResult = await storageService.uploadFile(req.file.buffer, `avatar_${uuid()}`);
             imageUrl = uploadResult.url;
         } catch (uploadErr) {
-            console.error('Profile picture upload error:', uploadErr);
             return res.status(500).json({ message: 'Failed to upload image. Please try again.' });
         }
 
@@ -352,7 +345,6 @@ async function updateProfilePicture(req, res) {
             }
         });
     } catch (err) {
-        console.error('Update profile picture error:', err);
         res.status(500).json({ message: "Failed to update profile picture" });
     }
 }

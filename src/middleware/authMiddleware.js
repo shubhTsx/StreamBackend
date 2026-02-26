@@ -1,6 +1,11 @@
 const jwt = require('jsonwebtoken');
 require("dotenv").config();
-const JWT_KEY = process.env.JWT_KEY || 'fallback_jwt_secret_key_for_development';
+
+const JWT_KEY = process.env.JWT_KEY;
+if (!JWT_KEY) {
+    throw new Error('JWT_KEY environment variable is required');
+}
+
 const User = require('../models/user.model');
 const FoodPartner = require('../models/foodPartner.model');
 
@@ -54,8 +59,5 @@ async function authFoodPartnerMiddleware(req, res, next) {
         return res.status(401).json({ message: "invalid or expired session" });
     }
 };
-
-
-
 
 module.exports = { authMiddleware, authFoodPartnerMiddleware };

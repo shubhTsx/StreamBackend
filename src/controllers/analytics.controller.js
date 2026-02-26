@@ -81,7 +81,6 @@ async function getDashboardStats(req, res) {
             monthlyRevenue
         });
     } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
         res.status(500).json({ message: "Error fetching dashboard statistics" });
     }
 }
@@ -143,7 +142,6 @@ async function getAnalytics(req, res) {
             dailyStats
         });
     } catch (error) {
-        console.error('Error fetching analytics:', error);
         res.status(500).json({ message: "Error fetching analytics data" });
     }
 }

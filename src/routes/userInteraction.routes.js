@@ -46,7 +46,6 @@ router.post('/cart', authMiddleware, async (req, res) => {
         await user.save();
         res.status(200).json({ message: 'Added to cart', cart: user.cart });
     } catch (err) {
-        console.error('Add to cart error:', err);
         res.status(500).json({ message: 'Failed to add to cart' });
     }
 });
